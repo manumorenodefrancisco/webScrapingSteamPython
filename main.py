@@ -30,25 +30,27 @@ for page in range(1, 3):
         juegos = html.find_all("a", class_="search_result_row")
 
         for juego in juegos:
-            titulo = juego.find("span", class_="title")
-            precio = juego.find("div", class_="discount_final_price")
-            imagen = juego.find("img")
-            released = juego.find("div", class_="search_released")
-            plataformas = [p.get("class")[1] if p.get("class")[1] != "group_separator" else juego.find("span", class_="vr_supported").text
-                           for p in juego.find_all("span", class_="platform_img")] # <span class="platform_img win"></span>
-            # <span class="platform_img group_separator"></span> -> no guardar
-            # <span class="vr_supported">Compatible con la RV</span>
+            id_steam = juego.get("data-ds-appid")
+            titulo = juego.find("span", class_="title").text
+            precio = juego.find("div", class_="discount_final_price").text if precio.text != "Free" else precio.text = "0,00€"
+            imagen = juego.find("img").text
+            so_nativos = [p.get("class")[1] for p in juego.find_all("span", class_="platform_img") # <span class="platform_img win"></span>
+                          if p.get("class")[1] != "group_separator"]  # <span class="platform_img group_separator"></span> -> no guardar
+            released = juego.find("div", class_="search_released").text.strip()
+            discount_original_price = juego.find("div", class_="discount_original_price").text.strip()
+            discount_pct = juego.find("div", class_="discount_pct").text
 
-            texto_precio = precio.text
-            if texto_precio == "Free":
-                texto_precio = "0,00€"
-            # print(titulo.text +" - "+ texto_precio)
+            dictJuego["id steam"] = id_steam
+            es_vr = True if juego.find("span", class_="vr_supported") else False
+            dictJuego["titulo"] = titulo if not es_vr else titulo + "(VR Supported)"
+            dictJuego["precio"] = precio[:-1] # quitar '€'
+            dictJuego["precio anterior"] = discount_original_price[:-1] #no siempre hay
+            dictJuego["porcentaje descuento"] = discount_pct[1:-1]  # -90%, no siempre hay
+            dictJuego["imagen"] = imagen
+            dictJuego["sistemas operativos"] = so_nativos
 
-            dictJuego["titulo"] = titulo.text
-            dictJuego["precio"] = texto_precio[:-1] # para quitarle el €
-            dictJuego["imagen"] = imagen.text
-            dictJuego["plataformas"] = plataformas
-            dictJuego["released"] = released.text.strip()
+            dictJuego["released"] = released
 
             arrayJuegos.append(dictJuego)
             print(arrayJuegos)
+
