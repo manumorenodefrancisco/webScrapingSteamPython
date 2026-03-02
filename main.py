@@ -26,6 +26,13 @@ for page in range(1, 3):
     if html:
         titulos = html.find_all("span", class_="title")
         precios = html.find_all("div", class_="discount_final_price")
-        print(titulos)
-        print(precios)
+        #print(precios)
 
+        for titulo, precio in zip(titulos, precios): # zip une indice de elemnto 1 con indice de elemento 2 (titulos[x] con precios[x])
+            texto_precio = precio.text
+            if texto_precio == "Free":
+                texto_precio = "0,00€"
+
+            dict[titulo.text] = texto_precio[:-1] #para quitarle el €
+
+            print(titulo.text +" - "+ texto_precio)
