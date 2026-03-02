@@ -7,6 +7,7 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
+
 def sopear(url, page):
     response = requests.get(url, headers=headers, verify=False)
 
@@ -18,21 +19,36 @@ def sopear(url, page):
 
     return BeautifulSoup(response.content, "html.parser")
 
-dict = {}
+
+arrayJuegos = []
+dictJuego = {}
 for page in range(1, 3):
     url = BASE_URL + str(page)
     html = sopear(url, page)
 
     if html:
-        titulos = html.find_all("span", class_="title")
-        precios = html.find_all("div", class_="discount_final_price")
-        #print(precios)
+        juegos = html.find_all("a", class_="search_result_row")
 
-        for titulo, precio in zip(titulos, precios): # zip une indice de elemnto 1 con indice de elemento 2 (titulos[x] con precios[x])
+        for juego in juegos:
+            titulo = juego.find("span", class_="title")
+            precio = juego.find("div", class_="discount_final_price")
+            imagen = juego.find("img")
+            released = juego.find("div", class_="search_released")
+            plataformas = [p.get("class")[1] if p.get("class")[1] != "group_separator" else juego.find("span", class_="vr_supported").text
+                           for p in juego.find_all("span", class_="platform_img")] # <span class="platform_img win"></span>
+            # <span class="platform_img group_separator"></span> -> no guardar
+            # <span class="vr_supported">Compatible con la RV</span>
+
             texto_precio = precio.text
             if texto_precio == "Free":
                 texto_precio = "0,00€"
+            # print(titulo.text +" - "+ texto_precio)
 
-            dict[titulo.text] = texto_precio[:-1] #para quitarle el €
+            dictJuego["titulo"] = titulo.text
+            dictJuego["precio"] = texto_precio[:-1] # para quitarle el €
+            dictJuego["imagen"] = imagen.text
+            dictJuego["plataformas"] = plataformas
+            dictJuego["released"] = released.text.strip()
 
-            print(titulo.text +" - "+ texto_precio)
+            arrayJuegos.append(dictJuego)
+            print(arrayJuegos)
