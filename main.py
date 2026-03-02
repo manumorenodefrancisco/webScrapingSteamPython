@@ -1,3 +1,4 @@
+import openpyxl
 import requests
 from bs4 import BeautifulSoup
 
@@ -6,6 +7,22 @@ BASE_URL = "https://store.steampowered.com/search/?page="
 headers = {
     "User-Agent": "Mozilla/5.0"
 }
+
+def guardar_en_excel(fila):
+    archivo = "JuegosExcelBD.xlsx"
+    try:
+        wb = openpyxl.load_workbook(archivo)
+    except FileNotFoundError:
+        wb = openpyxl.Workbook()
+        if "Sheet" in wb.sheetnames:
+            wb.remove(wb["Sheet"]) #hoja por defecto
+        sheet = wb.create_sheet("Juegos")
+        sheet.append(["id", "titulo", "precio", "precio anterior", "descuento", "released", "imagen", "so", "fecha_scrap"])
+    else:
+        sheet = wb["Juegos"]
+
+    sheet.append(fila)
+    wb.save(archivo)
 
 def sopear(url, page):
     response = requests.get(url, headers=headers, verify=False)
