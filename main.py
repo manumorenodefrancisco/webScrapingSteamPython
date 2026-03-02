@@ -7,7 +7,6 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-
 def sopear(url, page):
     response = requests.get(url, headers=headers, verify=False)
 
@@ -18,7 +17,6 @@ def sopear(url, page):
         return None
 
     return BeautifulSoup(response.content, "html.parser")
-
 
 arrayJuegos = []
 dictJuego = {}
