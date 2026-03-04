@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://store.steampowered.com/search/?page="
+MONGO_CLIENT = "mongodb+srv://manu:manu1231@steam-web-scraper.ryuggsi.mongodb.net/?appName=steam-web-scraper"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -21,7 +22,7 @@ def sopear(url, page):
     return BeautifulSoup(response.content, "html.parser")
 
 def guardar_en_mongo(juegos):
-    client = pymongo.MongoClient("mongodb://localhost:27017/")
+    client = pymongo.MongoClient(MONGO_CLIENT)
     db = client["steam"]
     tabla = db["videojuegos"]
 
@@ -30,8 +31,18 @@ def guardar_en_mongo(juegos):
             continue
         tabla.update_one({"id steam": i["id steam"]}, {"$set": i}, upsert=True)
 
-def mongo_a_excel(archivo="JuegosExcelBD.xlsx"):
-    client = pymongo.MongoClient("mongodb://localhost:27017/")
+def ver_mongo(limit):
+    client = pymongo.MongoClient(MONGO_CLIENT)
+    db = client["steam"]
+    print("Colecciones:", db.list_collection_names())
+
+    tabla = db["videojuegos"]
+    for diccionario in tabla.find({}).limit(limit):# = SELECT * FROM videojuegos LIMIT <limit>
+        print(diccionario)
+
+def mongo_a_excel():
+    archivo = "JuegosExcelBD.xlsx"
+    client = pymongo.MongoClient(MONGO_CLIENT)
     db = client["steam"]
     tabla = db["videojuegos"]
 
@@ -44,6 +55,8 @@ def mongo_a_excel(archivo="JuegosExcelBD.xlsx"):
 
     for diccionario in tabla.find({}):
         so = diccionario.get("sistemas operativos")
+        if isinstance(so, list):
+            so = ",".join(so) #-> "win, linux"...
 
         fila = [
             str(diccionario.get("_id")),
