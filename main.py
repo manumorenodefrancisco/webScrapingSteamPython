@@ -5,11 +5,11 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+MONGO_CLIENT = "mongodb+srv://manu:manu1231@steam-web-scraper.ryuggsi.mongodb.net/?appName=steam-web-scraper"
 ACTUAL_XLSX = "Videojuegos.xlsx"
 HIST_XLSX = "JuegosHistorico.xlsx"
 
 BASE_URL = "https://store.steampowered.com/search/?page="
-MONGO_CLIENT = "mongodb+srv://manu:manu1231@steam-web-scraper.ryuggsi.mongodb.net/?appName=steam-web-scraper"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
