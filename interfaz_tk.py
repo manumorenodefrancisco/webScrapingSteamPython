@@ -33,7 +33,7 @@ def tarea(inicio, fin, guardar_mongo, root, tbl_juegos, tbl_ofertas, var_texto):
         root.after(0, var_texto.set, f"Error: {e}")
 
 
-def ejecutar_en_hilo(entrada_inicio, entrada_fin, var_mongo, root, tbl_juegos, tbl_ofertas, var_texto):
+def ejecutar(entrada_inicio, entrada_fin, var_mongo, root, tbl_juegos, tbl_ofertas, var_texto):
     var_texto.set("Scrapeando...")
     try:
         inicio = int(entrada_inicio.get())
@@ -115,7 +115,7 @@ def app():
     tab_ofertas.columnconfigure(0, weight=1)
     tab_ofertas.rowconfigure(0, weight=1)
 
-    boton = ttk.Button(frame_top, text="Scrapear + Guardar", command=lambda: ejecutar_en_hilo(entrada_inicio, entrada_fin, var_mongo, root, tbl_juegos, tbl_ofertas, var_texto))
+    boton = ttk.Button(frame_top, text="Scrapear + Guardar", command=lambda: ejecutar(entrada_inicio, entrada_fin, var_mongo, root, tbl_juegos, tbl_ofertas, var_texto))
     boton.grid(row=0, column=5, padx=(8, 0))
 
     root.mainloop()

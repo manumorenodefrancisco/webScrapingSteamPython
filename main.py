@@ -174,10 +174,10 @@ def upsert_excel_actual(dataframe_nuevo, archivo=ACTUAL_XLSX):
         if id_steam is None:
             continue
 
-        filtro = dataframe_antiguo["id steam"] == id_steam
-        if filtro.any():
+        filtro_id = dataframe_antiguo["id steam"] == id_steam
+        if filtro_id.any():
             for columna in dataframe_nuevo.columns:
-                dataframe_antiguo.loc[filtro, columna] = fila_nueva.get(columna)
+                dataframe_antiguo.loc[filtro_id, columna] = fila_nueva.get(columna)
         else:
             dataframe_antiguo = pandas.concat([dataframe_antiguo, fila_nueva.to_frame().T])
 
