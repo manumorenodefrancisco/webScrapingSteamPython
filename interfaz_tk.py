@@ -4,7 +4,6 @@ from tkinter import ttk
 
 import main
 
-
 def llenar_tabla_juegos(tabla, juegos):
     for item in tabla.get_children():
         tabla.delete(item)
@@ -17,7 +16,6 @@ def llenar_tabla_ofertas(tabla, ofertas):
     for o in ofertas or []:
         tabla.insert("", "end", values=(o.get("id steam"), o.get("titulo"), o.get("precio anterior"), o.get("precio actual"), o.get("porcentaje")))
 
-
 def tarea(inicio, fin, guardar_mongo, root, tbl_juegos, tbl_ofertas, var_texto):
     try:
         juegos, ofertas = main.ejecutar_proceso(inicio, fin, guardar_mongo=guardar_mongo)
@@ -27,6 +25,7 @@ def tarea(inicio, fin, guardar_mongo, root, tbl_juegos, tbl_ofertas, var_texto):
 
         root.after(0, llenar_tabla_juegos, tbl_juegos, juegos)
         root.after(0, llenar_tabla_ofertas, tbl_ofertas, ofertas)
+
         root.after(0, var_texto.set, f"OK. Juegos: {len(juegos)} | Ofertas: {len(ofertas)}")
 
     except Exception as e:
