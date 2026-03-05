@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import END, Text, Spinbox, Toplevel, Scale, HORIZONTAL  # import *
-
+# pip install --upgrade pymongo pandas openpyxl requests beautifulsoup4
+# python -X utf8 interfaz_tk.py
 #1
 root = tk.Tk()
 root.title("Saludos")

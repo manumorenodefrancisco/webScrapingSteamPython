@@ -26,7 +26,29 @@ def sopear(url, page):
 
     return BeautifulSoup(response.content, "html.parser")
 
-def scrapearJuegos(page=1, page_fin=3):
+def ejecutar_proceso(page=1, page_fin=6, guardar_mongo=False):
+    arrayJuegos = scrapearJuegos(page, page_fin)
+
+    if not arrayJuegos:
+        print("No se scrapearon juegos, devolviendo listas vacías.")
+        return [], []
+
+    dataframe_nuevo = pandas.DataFrame(arrayJuegos)
+    try:
+        dataframe_nuevo["fecha_scrap"] = pandas.to_datetime(dataframe_nuevo["fecha_scrap"])
+    except Exception:
+        pass
+
+    ofertas = monitor_ofertas(dataframe_nuevo)
+    append_excel_historico(dataframe_nuevo)
+    upsert_excel_actual(dataframe_nuevo)
+
+    if guardar_mongo:
+        guardar_en_mongo(arrayJuegos)
+
+    return arrayJuegos, ofertas
+
+def scrapearJuegos(page=1, page_fin=6):
     arrayJuegos = []
     for page in range(page, page_fin):
         url = BASE_URL + str(page)
@@ -72,28 +94,6 @@ def scrapearJuegos(page=1, page_fin=3):
     print(f"Juegos scrapeados: {len(arrayJuegos)}")
     return arrayJuegos
 
-def ejecutar_proceso(page=1, page_fin=2, guardar_mongo=False):
-    arrayJuegos = scrapearJuegos(page, page_fin)
-
-    if not arrayJuegos:
-        print("No se scrapearon juegos, devolviendo listas vacías.")
-        return [], []
-
-    dataframe_nuevo = pandas.DataFrame(arrayJuegos)
-    try:
-        dataframe_nuevo["fecha_scrap"] = pandas.to_datetime(dataframe_nuevo["fecha_scrap"])
-    except Exception:
-        pass
-
-    ofertas = monitor_ofertas(dataframe_nuevo)
-    append_excel_historico(dataframe_nuevo)
-    upsert_excel_actual(dataframe_nuevo)
-
-    if guardar_mongo:
-        guardar_en_mongo(arrayJuegos)
-
-    return arrayJuegos, ofertas
-
 def precio_a_float(txt):
     if txt is None:
         return None
@@ -106,51 +106,9 @@ def precio_a_float(txt):
     except Exception:
         return None
 
-def upsert_excel_actual(dataframe_nuevo, archivo=ACTUAL_XLSX):
-    try:
-        dataframe_antiguo = pandas.read_excel(archivo)
-    except FileNotFoundError:
-        dataframe_antiguo = pandas.DataFrame()
-
-    if dataframe_antiguo.empty:
-        datos_finales = dataframe_nuevo.copy()
-        datos_finales.to_excel(archivo, index=False)
-        return datos_finales
-
-    for indice, fila_nueva in dataframe_nuevo.iterrows():
-        id_steam = fila_nueva.get("id steam")
-        if id_steam is None:
-            continue
-
-        mascara = dataframe_antiguo["id steam"] == id_steam
-        if mascara.any():
-            for columna in dataframe_nuevo.columns:
-                dataframe_antiguo.loc[mascara, columna] = fila_nueva.get(columna)
-        else:
-            dataframe_antiguo = pandas.concat([dataframe_antiguo, fila_nueva.to_frame().T])
-
-    dataframe_antiguo.to_excel(archivo, index=False)
-    return dataframe_antiguo
-
-def append_excel_historico(dataframe_nuevo, archivo=HIST_XLSX):
-    columnas = ["id steam", "titulo", "precio", "fecha_scrap"]
-    if dataframe_nuevo.empty:
-        print("DataFrame historico vacío.")
-        return
-    datos_historico_nuevos = dataframe_nuevo[columnas].copy()
-
-    try:
-        datos_historico_antiguos = pandas.read_excel(archivo)
-    except FileNotFoundError:
-        datos_historico_antiguos = pandas.DataFrame(columns=columnas)
-
-    datos_finales = pandas.concat([datos_historico_antiguos, datos_historico_nuevos])
-    datos_finales.to_excel(archivo, index=False)
-    return datos_finales
-
 def monitor_ofertas(dataframe_nuevo, archivo_historico=HIST_XLSX, porcentaje_minimo=10):
     try:
-        datos_historico = pandas.read_excel(archivo_historico)
+        datos_historico = pandas.read_excel(archivo_historico, engine='openpyxl')
     except FileNotFoundError:
         print("No hay historico aun.")
         return []
@@ -199,6 +157,48 @@ def monitor_ofertas(dataframe_nuevo, archivo_historico=HIST_XLSX, porcentaje_min
         print("No hay ofertas segun tu historico.")
 
     return ofertas
+
+def upsert_excel_actual(dataframe_nuevo, archivo=ACTUAL_XLSX):
+    try:
+        dataframe_antiguo = pandas.read_excel(archivo, engine='openpyxl')
+    except FileNotFoundError:
+        dataframe_antiguo = pandas.DataFrame()
+
+    if dataframe_antiguo.empty:
+        datos_finales = dataframe_nuevo.copy()
+        datos_finales.to_excel(archivo, index=False)
+        return datos_finales
+
+    for indice, fila_nueva in dataframe_nuevo.iterrows():
+        id_steam = fila_nueva.get("id steam")
+        if id_steam is None:
+            continue
+
+        filtro = dataframe_antiguo["id steam"] == id_steam
+        if filtro.any():
+            for columna in dataframe_nuevo.columns:
+                dataframe_antiguo.loc[filtro, columna] = fila_nueva.get(columna)
+        else:
+            dataframe_antiguo = pandas.concat([dataframe_antiguo, fila_nueva.to_frame().T])
+
+    dataframe_antiguo.to_excel(archivo, index=False)
+    return dataframe_antiguo
+
+def append_excel_historico(dataframe_nuevo, archivo=HIST_XLSX):
+    columnas = ["id steam", "titulo", "precio", "fecha_scrap"]
+    if dataframe_nuevo.empty:
+        print("DataFrame historico vacío.")
+        return
+    datos_historico_nuevos = dataframe_nuevo[columnas].copy()
+
+    try:
+        datos_historico_antiguos = pandas.read_excel(archivo, engine='openpyxl')
+    except FileNotFoundError:
+        datos_historico_antiguos = pandas.DataFrame(columns=columnas)
+
+    datos_finales = pandas.concat([datos_historico_antiguos, datos_historico_nuevos])
+    datos_finales.to_excel(archivo, index=False)
+    return datos_finales
 
 def guardar_en_mongo(juegos_array):
     client = pymongo.MongoClient(MONGO_CLIENT)
